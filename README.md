@@ -14,5 +14,11 @@ c := restclient.NewRestClient(baseURL)
 var user UserType
 q := url.Values{}
 q.Set("id", "some-user-id")
-c.Request("GET", "/user", q, nil, &user)
+if err := c.Request("GET", "/user", q, nil, &user); err != nil {
+    panic("GET /user failed")
+}
+// Modify user ...
+if err := c.Request("POST", "/user", nil, user, nil); err != nil {
+    panic("POST /user failed")
+}
 ```
