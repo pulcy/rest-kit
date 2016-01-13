@@ -1,4 +1,4 @@
-package client
+package restclient
 
 import (
 	"github.com/juju/errgo"

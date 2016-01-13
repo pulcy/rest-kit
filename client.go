@@ -1,4 +1,4 @@
-package client
+package restclient
 
 import (
 	"bytes"
@@ -20,14 +20,14 @@ type RestClient struct {
 	ResponseParser func(resp *http.Response, result interface{}) error
 }
 
-func NewRestClient(baseURL *url.URL) (*RestClient, error) {
+func NewRestClient(baseURL *url.URL) *RestClient {
 	c := &RestClient{
 		baseURL: baseURL,
 	}
 	c.ResultParser = c.DefaultResultParser
 	c.ErrorParser = c.DefaultErrorParser
 	c.ResponseParser = c.DefaultResponseParser
-	return c, nil
+	return c
 }
 
 // Request executes a client request.
