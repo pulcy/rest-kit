@@ -39,28 +39,19 @@ func Html(resp http.ResponseWriter, content string, code int) error {
 // Error sends an error message back to the given response writer.
 func Error(resp http.ResponseWriter, err error) error {
 	code := http.StatusBadRequest
-	message := err.Error()
-	if IsForbidden(err) {
-		code = http.StatusForbidden
-	} else if IsInternalServer(err) {
-		code = http.StatusInternalServerError
-	} else if IsInvalidArgument(err) {
-		code = http.StatusBadRequest
-	} else if IsNotFound(err) {
-		code = http.StatusNotFound
-	} else if IsUnauthorizedError(err) {
-		code = http.StatusUnauthorized
-	}
+	var er *ErrorResponse
 
-	if er, ok := err.(*ErrorResponse); ok {
-		return maskAny(JSON(resp, er, code))
+	if erX, ok := err.(*ErrorResponse); ok {
+		er = erX
+	} else if erX, ok := errgo.Cause(err).(*ErrorResponse); ok {
+		er = erX
+	} else {
+		er = &ErrorResponse{}
+		er.TheError.Message = err.Error()
+		er.TheError.Code = -1
 	}
-	if er, ok := errgo.Cause(err).(*ErrorResponse); ok {
-		return maskAny(JSON(resp, er, code))
+	if er.statusCode != 0 {
+		code = er.statusCode
 	}
-
-	er := ErrorResponse{}
-	er.TheError.Message = message
-	er.TheError.Code = -1
 	return maskAny(JSON(resp, er, code))
 }

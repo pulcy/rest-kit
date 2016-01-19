@@ -1,36 +1,43 @@
 package restkit
 
 import (
+	"net/http"
+
 	"github.com/juju/errgo"
 )
 
 var (
-	ForbiddenError       = errgo.New("forbidden")
-	InternalServerError  = errgo.New("internal server error")
-	InvalidArgumentError = errgo.New("invalid argument")
-	NotFoundError        = errgo.New("not found")
-	UnauthorizedError    = errgo.New("unauthorized")
-	maskAny              = errgo.MaskFunc(errgo.Any)
+	ForbiddenError          = newErrorResponseWithStatusCodeFunc(http.StatusForbidden)
+	InternalServerError     = newErrorResponseWithStatusCodeFunc(http.StatusInternalServerError)
+	BadRequestError         = newErrorResponseWithStatusCodeFunc(http.StatusBadRequest)
+	NotFoundError           = newErrorResponseWithStatusCodeFunc(http.StatusNotFound)
+	PreconditionFailedError = newErrorResponseWithStatusCodeFunc(http.StatusPreconditionFailed)
+	UnauthorizedError       = newErrorResponseWithStatusCodeFunc(http.StatusUnauthorized)
+	maskAny                 = errgo.MaskFunc(errgo.Any)
 )
 
-func IsForbidden(err error) bool {
-	return errgo.Cause(err) == ForbiddenError
+func IsStatusBadRequest(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusBadRequest)
 }
 
-func IsInternalServer(err error) bool {
-	return errgo.Cause(err) == InternalServerError
+func IsStatusForbidden(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusForbidden)
 }
 
-func IsInvalidArgument(err error) bool {
-	return errgo.Cause(err) == InvalidArgumentError
+func IsStatusInternalServer(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusInternalServerError)
 }
 
-func IsNotFound(err error) bool {
-	return errgo.Cause(err) == NotFoundError
+func IsStatusNotFound(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusNotFound)
 }
 
-func IsUnauthorizedError(err error) bool {
-	return errgo.Cause(err) == UnauthorizedError
+func IsStatusPreconditionFailed(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusPreconditionFailed)
+}
+
+func IsStatusUnauthorizedError(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusUnauthorized)
 }
 
 type ErrorResponse struct {
@@ -38,6 +45,9 @@ type ErrorResponse struct {
 		Message string `json:"message,omitempty"`
 		Code    int    `json:"code,omitempty"`
 	} `json:"error"`
+
+	// HTTP status code
+	statusCode int `json:"-"`
 }
 
 func (er *ErrorResponse) Error() string {
@@ -51,9 +61,32 @@ func IsErrorResponseWithCode(err error, code int) bool {
 	return false
 }
 
+func IsErrorResponseWithCodeFunc(code int) func(error) bool {
+	return func(err error) bool {
+		return IsErrorResponseWithCode(err, code)
+	}
+}
+
+func isErrorResponseWithStatusCode(err error, statusCode int) bool {
+	if er, ok := errgo.Cause(err).(*ErrorResponse); ok {
+		return er.statusCode == statusCode
+	}
+	return false
+}
+
 func NewErrorResponse(message string, code int) error {
-	er := ErrorResponse{}
+	er := &ErrorResponse{}
 	er.TheError.Message = message
 	er.TheError.Code = code
-	return &er
+	return er
+}
+
+func newErrorResponseWithStatusCodeFunc(statusCode int) func(string, int) error {
+	return func(message string, code int) error {
+		er := &ErrorResponse{}
+		er.TheError.Message = message
+		er.TheError.Code = code
+		er.statusCode = statusCode
+		return er
+	}
 }

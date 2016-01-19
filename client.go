@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	syspath "path"
-
-	"github.com/juju/errgo"
 )
 
 type RestClient struct {
@@ -104,31 +102,14 @@ func (c *RestClient) DefaultResultParser(resp *http.Response, body []byte, resul
 // DefaultErrorParser tries to parse the given response body into an ErrorResponse.
 func (c *RestClient) DefaultErrorParser(resp *http.Response, body []byte) error {
 	var er ErrorResponse
-	message := resp.Status
-	var underlying error
 	if len(body) > 0 {
 		if err := json.Unmarshal(body, &er); err != nil {
 			return maskAny(err)
 		}
-		if resp.StatusCode == http.StatusBadRequest {
-			return &er
-		}
-		message = er.Error()
-		underlying = &er
+	} else {
+		er.TheError.Message = resp.Status
 	}
+	er.statusCode = resp.StatusCode
 
-	switch resp.StatusCode {
-	case http.StatusBadRequest:
-		return maskAny(errgo.WithCausef(underlying, InvalidArgumentError, message))
-	case http.StatusForbidden:
-		return maskAny(errgo.WithCausef(underlying, ForbiddenError, message))
-	case http.StatusInternalServerError:
-		return maskAny(errgo.WithCausef(underlying, InternalServerError, message))
-	case http.StatusNotFound:
-		return maskAny(errgo.WithCausef(underlying, NotFoundError, message))
-	case http.StatusUnauthorized:
-		return maskAny(errgo.WithCausef(underlying, UnauthorizedError, message))
-	default:
-		return maskAny(errgo.WithCausef(underlying, InternalServerError, "unknown status %d: %s", resp.StatusCode, message))
-	}
+	return maskAny(&er)
 }
