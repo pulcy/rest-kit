@@ -1,4 +1,4 @@
-# rest-client
+# rest-kit
 
 Simple REST client helper written in Go.
 
@@ -7,10 +7,10 @@ Simple REST client helper written in Go.
 ```
 import (
     "net/url"
-    "github.com/pulcy/rest-client"
+    "github.com/pulcy/rest-kit"
 )
 
-c := restclient.NewRestClient(baseURL)
+c := restkit.NewRestClient(baseURL)
 var user UserType
 q := url.Values{}
 q.Set("id", "some-user-id")
