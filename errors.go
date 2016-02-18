@@ -68,6 +68,15 @@ func (er *ErrorResponse) Error() string {
 	return er.TheError.Message
 }
 
+// HTTPStatusCode returns the status code of the given ErrorResponse if
+// such a status code was set. Otherwise it returns http.StatusBadRequest.
+func (er *ErrorResponse) HTTPStatusCode() int {
+	if er.statusCode != 0 {
+		return er.statusCode
+	}
+	return http.StatusBadRequest
+}
+
 func IsErrorResponseWithCode(err error, code int) bool {
 	if er, ok := errgo.Cause(err).(*ErrorResponse); ok {
 		return er.TheError.Code == code
@@ -103,4 +112,21 @@ func newErrorResponseWithStatusCodeFunc(statusCode int) func(string, int) error 
 		er.statusCode = statusCode
 		return er
 	}
+}
+
+// NewErrorResponseFromError creates an ErrorResponse from the given error.
+// This ErrorResponse can be sent directly to an HttpResponseWriter.
+func NewErrorResponseFromError(err error) ErrorResponse {
+	var er *ErrorResponse
+
+	if erX, ok := err.(*ErrorResponse); ok {
+		er = erX
+	} else if erX, ok := errgo.Cause(err).(*ErrorResponse); ok {
+		er = erX
+	} else {
+		er = &ErrorResponse{}
+		er.TheError.Message = err.Error()
+		er.TheError.Code = -1
+	}
+	return *er
 }

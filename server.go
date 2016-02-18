@@ -17,8 +17,6 @@ package restkit
 import (
 	"encoding/json"
 	"net/http"
-
-	"github.com/juju/errgo"
 )
 
 // JSON creates a application/json content-type header, sets the given HTTP
@@ -52,20 +50,7 @@ func Html(resp http.ResponseWriter, content string, code int) error {
 
 // Error sends an error message back to the given response writer.
 func Error(resp http.ResponseWriter, err error) error {
-	code := http.StatusBadRequest
-	var er *ErrorResponse
-
-	if erX, ok := err.(*ErrorResponse); ok {
-		er = erX
-	} else if erX, ok := errgo.Cause(err).(*ErrorResponse); ok {
-		er = erX
-	} else {
-		er = &ErrorResponse{}
-		er.TheError.Message = err.Error()
-		er.TheError.Code = -1
-	}
-	if er.statusCode != 0 {
-		code = er.statusCode
-	}
+	er := NewErrorResponseFromError(err)
+	code := er.HTTPStatusCode()
 	return maskAny(JSON(resp, er, code))
 }
