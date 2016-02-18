@@ -56,17 +56,22 @@ func (c *RestClient) Request(method, path string, query url.Values, reqBody inte
 	}
 
 	var reqReader io.Reader
+	var contentType string
 	if reqBody != nil {
 		content, err := json.Marshal(reqBody)
 		if err != nil {
 			return maskAny(err)
 		}
 		reqReader = bytes.NewBuffer(content)
+		contentType = "application/json"
 	}
 
 	req, err := http.NewRequest(method, url.String(), reqReader)
 	if err != nil {
 		return maskAny(err)
+	}
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
