@@ -27,6 +27,7 @@ import (
 type RestClient struct {
 	baseURL *url.URL
 
+	RequestBuilder func(method, path string, query url.Values, reqBody interface{}) (*http.Request, error)
 	ResultParser   func(resp *http.Response, body []byte, result interface{}) error
 	ErrorParser    func(resp *http.Response, body []byte) error
 	ResponseParser func(resp *http.Response, result interface{}) error
@@ -36,6 +37,7 @@ func NewRestClient(baseURL *url.URL) *RestClient {
 	c := &RestClient{
 		baseURL: baseURL,
 	}
+	c.RequestBuilder = c.DefaultRequestBuilder
 	c.ResultParser = c.DefaultResultParser
 	c.ErrorParser = c.DefaultErrorParser
 	c.ResponseParser = c.DefaultResponseParser
@@ -49,6 +51,23 @@ func NewRestClient(baseURL *url.URL) *RestClient {
 // reqBody: Object to marshal into the request body
 // result: Reference to object to unmarshal the response into
 func (c *RestClient) Request(method, path string, query url.Values, reqBody interface{}, result interface{}) error {
+	req, err := c.RequestBuilder(method, path, query, reqBody)
+	if err != nil {
+		return maskAny(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return maskAny(err)
+	}
+
+	if err := c.ResponseParser(resp, result); err != nil {
+		return maskAny(err)
+	}
+	return nil
+}
+
+// DefaultRequestBuilder implements the default RequestBuilder behavior.
+func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values, reqBody interface{}) (*http.Request, error) {
 	url := *c.baseURL
 	url.Path = syspath.Join(url.Path, path)
 	if query != nil {
@@ -60,7 +79,7 @@ func (c *RestClient) Request(method, path string, query url.Values, reqBody inte
 	if reqBody != nil {
 		content, err := json.Marshal(reqBody)
 		if err != nil {
-			return maskAny(err)
+			return nil, maskAny(err)
 		}
 		reqReader = bytes.NewBuffer(content)
 		contentType = "application/json"
@@ -68,20 +87,12 @@ func (c *RestClient) Request(method, path string, query url.Values, reqBody inte
 
 	req, err := http.NewRequest(method, url.String(), reqReader)
 	if err != nil {
-		return maskAny(err)
+		return nil, maskAny(err)
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return maskAny(err)
-	}
-
-	if err := c.ResponseParser(resp, result); err != nil {
-		return maskAny(err)
-	}
-	return nil
+	return req, nil
 }
 
 // DefaultResponseParser implements the default ResponseParser behavior.
