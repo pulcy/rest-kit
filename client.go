@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	syspath "path"
+	"strconv"
 )
 
 type RestClient struct {
@@ -76,6 +77,7 @@ func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values
 
 	var reqReader io.Reader
 	var contentType string
+	var contentLength string
 	if reqBody != nil {
 		content, err := json.Marshal(reqBody)
 		if err != nil {
@@ -83,6 +85,7 @@ func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values
 		}
 		reqReader = bytes.NewBuffer(content)
 		contentType = "application/json"
+		contentLength = strconv.Itoa(len(content))
 	}
 
 	req, err := http.NewRequest(method, url.String(), reqReader)
@@ -91,6 +94,9 @@ func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
+	}
+	if contentLength != "" {
+		req.Header.Set("Content-Length", contentLength)
 	}
 	return req, nil
 }
