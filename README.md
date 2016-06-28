@@ -1,5 +1,7 @@
 # rest-kit
 
+[![GoDoc](https://godoc.org/github.com/pulcy/rest-kit?status.svg)](http://godoc.org/github.com/pulcy/rest-kit)
+
 Simple REST client helper written in Go.
 
 ## Usage
