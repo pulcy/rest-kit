@@ -123,6 +123,10 @@ func NewErrorResponseFromError(err error) ErrorResponse {
 		er = erX
 	} else if erX, ok := errgo.Cause(err).(*ErrorResponse); ok {
 		er = erX
+		msg := err.Error()
+		if msg != "" {
+			er.TheError.Message = msg
+		}
 	} else {
 		er = &ErrorResponse{}
 		er.TheError.Message = err.Error()
