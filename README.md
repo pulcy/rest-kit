@@ -1,6 +1,7 @@
 # rest-kit
 
 [![GoDoc](https://godoc.org/github.com/pulcy/rest-kit?status.svg)](http://godoc.org/github.com/pulcy/rest-kit)
+[![Build Status](https://travis-ci.org/pulcy/rest-kit.svg?branch=master)](https://travis-ci.org/pulcy/rest-kit)
 
 Simple REST client helper written in Go.
 
