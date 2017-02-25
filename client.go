@@ -27,6 +27,7 @@ import (
 
 type RestClient struct {
 	baseURL *url.URL
+	client  *http.Client
 
 	RequestBuilder func(method, path string, query url.Values, reqBody interface{}) (*http.Request, error)
 	ResultParser   func(resp *http.Response, body []byte, result interface{}) error
@@ -34,9 +35,14 @@ type RestClient struct {
 	ResponseParser func(resp *http.Response, result interface{}) error
 }
 
-func NewRestClient(baseURL *url.URL) *RestClient {
+func NewRestClient(baseURL *url.URL, client ...*http.Client) *RestClient {
 	c := &RestClient{
 		baseURL: baseURL,
+	}
+	if len(client) > 0 {
+		c.client = client[0]
+	} else {
+		c.client = http.DefaultClient
 	}
 	c.RequestBuilder = c.DefaultRequestBuilder
 	c.ResultParser = c.DefaultResultParser
@@ -56,7 +62,7 @@ func (c *RestClient) Request(method, path string, query url.Values, reqBody inte
 	if err != nil {
 		return maskAny(err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return maskAny(err)
 	}
