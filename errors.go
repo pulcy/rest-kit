@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Epracom Advies.
+// Copyright (c) 2017 Epracom Advies.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,7 @@
 
 package restkit
 
-import (
-	"net/http"
-
-	"github.com/juju/errgo"
-)
+import "net/http"
 
 var (
 	ForbiddenError          = newErrorResponseWithStatusCodeFunc(http.StatusForbidden)
@@ -27,7 +23,9 @@ var (
 	NotFoundError           = newErrorResponseWithStatusCodeFunc(http.StatusNotFound)
 	PreconditionFailedError = newErrorResponseWithStatusCodeFunc(http.StatusPreconditionFailed)
 	UnauthorizedError       = newErrorResponseWithStatusCodeFunc(http.StatusUnauthorized)
-	maskAny                 = errgo.MaskFunc(errgo.Any)
+
+	WithStack = func(err error) error { return err }
+	Cause     = func(err error) error { return err }
 )
 
 func IsStatusBadRequest(err error) bool {
@@ -78,7 +76,7 @@ func (er *ErrorResponse) HTTPStatusCode() int {
 }
 
 func IsErrorResponseWithCode(err error, code int) bool {
-	if er, ok := errgo.Cause(err).(*ErrorResponse); ok {
+	if er, ok := Cause(err).(*ErrorResponse); ok {
 		return er.TheError.Code == code
 	}
 	return false
@@ -91,7 +89,7 @@ func IsErrorResponseWithCodeFunc(code int) func(error) bool {
 }
 
 func isErrorResponseWithStatusCode(err error, statusCode int) bool {
-	if er, ok := errgo.Cause(err).(*ErrorResponse); ok {
+	if er, ok := Cause(err).(*ErrorResponse); ok {
 		return er.statusCode == statusCode
 	}
 	return false
@@ -121,7 +119,7 @@ func NewErrorResponseFromError(err error) ErrorResponse {
 
 	if erX, ok := err.(*ErrorResponse); ok {
 		er = erX
-	} else if erX, ok := errgo.Cause(err).(*ErrorResponse); ok {
+	} else if erX, ok := Cause(err).(*ErrorResponse); ok {
 		er = erX
 		msg := err.Error()
 		if msg != "" {

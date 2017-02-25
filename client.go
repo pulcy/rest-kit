@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Epracom Advies.
+// Copyright (c) 2017 Epracom Advies.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,15 +60,15 @@ func NewRestClient(baseURL *url.URL, client ...*http.Client) *RestClient {
 func (c *RestClient) Request(method, path string, query url.Values, reqBody interface{}, result interface{}) error {
 	req, err := c.RequestBuilder(method, path, query, reqBody)
 	if err != nil {
-		return maskAny(err)
+		return WithStack(err)
 	}
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return maskAny(err)
+		return WithStack(err)
 	}
 
 	if err := c.ResponseParser(resp, result); err != nil {
-		return maskAny(err)
+		return WithStack(err)
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values
 	if reqBody != nil {
 		content, err := json.Marshal(reqBody)
 		if err != nil {
-			return nil, maskAny(err)
+			return nil, WithStack(err)
 		}
 		reqReader = bytes.NewBuffer(content)
 		contentType = "application/json"
@@ -96,7 +96,7 @@ func (c *RestClient) DefaultRequestBuilder(method, path string, query url.Values
 
 	req, err := http.NewRequest(method, url.String(), reqReader)
 	if err != nil {
-		return nil, maskAny(err)
+		return nil, WithStack(err)
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
@@ -115,18 +115,18 @@ func (c *RestClient) DefaultResponseParser(resp *http.Response, result interface
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return maskAny(err)
+		return WithStack(err)
 	}
 
 	if resp.StatusCode == http.StatusOK {
 		if err := c.ResultParser(resp, body, result); err != nil {
-			return maskAny(err)
+			return WithStack(err)
 		}
 		return nil
 	}
 
 	if err := c.ErrorParser(resp, body); err != nil {
-		return maskAny(err)
+		return WithStack(err)
 	}
 	return nil
 }
@@ -135,7 +135,7 @@ func (c *RestClient) DefaultResponseParser(resp *http.Response, result interface
 func (c *RestClient) DefaultResultParser(resp *http.Response, body []byte, result interface{}) error {
 	if result != nil {
 		if err := json.Unmarshal(body, result); err != nil {
-			return maskAny(err)
+			return WithStack(err)
 		}
 	}
 	return nil
@@ -146,12 +146,12 @@ func (c *RestClient) DefaultErrorParser(resp *http.Response, body []byte) error 
 	var er ErrorResponse
 	if len(body) > 0 {
 		if err := json.Unmarshal(body, &er); err != nil {
-			return maskAny(err)
+			return WithStack(err)
 		}
 	} else {
 		er.TheError.Message = resp.Status
 	}
 	er.statusCode = resp.StatusCode
 
-	return maskAny(&er)
+	return WithStack(&er)
 }

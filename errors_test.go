@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Epracom Advies.
+// Copyright (c) 2017 Epracom Advies.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,31 +55,31 @@ func TestError(t *testing.T) {
 			Tester: func(err error) bool { return IsErrorResponseWithCode(err, 123) },
 		},
 		{
-			Error:  maskAny(BadRequestError("val", 0)),
+			Error:  WithStack(BadRequestError("val", 0)),
 			Tester: IsStatusBadRequest,
 		},
 		{
-			Error:  maskAny(ForbiddenError("method", 1)),
+			Error:  WithStack(ForbiddenError("method", 1)),
 			Tester: IsStatusForbidden,
 		},
 		{
-			Error:  maskAny(InternalServerError("func", 9)),
+			Error:  WithStack(InternalServerError("func", 9)),
 			Tester: IsStatusInternalServer,
 		},
 		{
-			Error:  maskAny(NotFoundError("key", 7)),
+			Error:  WithStack(NotFoundError("key", 7)),
 			Tester: IsStatusNotFound,
 		},
 		{
-			Error:  maskAny(PreconditionFailedError("condition-x", 3)),
+			Error:  WithStack(PreconditionFailedError("condition-x", 3)),
 			Tester: IsStatusPreconditionFailed,
 		},
 		{
-			Error:  maskAny(UnauthorizedError("group", 2)),
+			Error:  WithStack(UnauthorizedError("group", 2)),
 			Tester: IsStatusUnauthorizedError,
 		},
 		{
-			Error:  maskAny(NewErrorResponse("test", 123)),
+			Error:  WithStack(NewErrorResponse("test", 123)),
 			Tester: func(err error) bool { return IsErrorResponseWithCode(err, 123) },
 		},
 	}

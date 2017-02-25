@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Epracom Advies.
+// Copyright (c) 2017 Epracom Advies.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ func JSON(resp http.ResponseWriter, result interface{}, code int) error {
 	resp.Header().Add("Content-Type", "application/json")
 	resp.WriteHeader(code)
 	if result != nil {
-		return maskAny(json.NewEncoder(resp).Encode(result))
+		return WithStack(json.NewEncoder(resp).Encode(result))
 	}
 	return nil
 }
@@ -36,7 +36,7 @@ func Text(resp http.ResponseWriter, content string, code int) error {
 	resp.Header().Add("Content-Type", "text/plain")
 	resp.WriteHeader(code)
 	_, err := resp.Write([]byte(content))
-	return maskAny(err)
+	return WithStack(err)
 }
 
 // Html creates a text/html content-type header, sets the given HTTP
@@ -45,12 +45,12 @@ func Html(resp http.ResponseWriter, content string, code int) error {
 	resp.Header().Add("Content-Type", "text/html")
 	resp.WriteHeader(code)
 	_, err := resp.Write([]byte(content))
-	return maskAny(err)
+	return WithStack(err)
 }
 
 // Error sends an error message back to the given response writer.
 func Error(resp http.ResponseWriter, err error) error {
 	er := NewErrorResponseFromError(err)
 	code := er.HTTPStatusCode()
-	return maskAny(JSON(resp, er, code))
+	return WithStack(JSON(resp, er, code))
 }
