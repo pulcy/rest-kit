@@ -21,6 +21,7 @@ var (
 	InternalServerError     = newErrorResponseWithStatusCodeFunc(http.StatusInternalServerError)
 	BadRequestError         = newErrorResponseWithStatusCodeFunc(http.StatusBadRequest)
 	NotFoundError           = newErrorResponseWithStatusCodeFunc(http.StatusNotFound)
+	ConflictError           = newErrorResponseWithStatusCodeFunc(http.StatusConflict)
 	PreconditionFailedError = newErrorResponseWithStatusCodeFunc(http.StatusPreconditionFailed)
 	UnauthorizedError       = newErrorResponseWithStatusCodeFunc(http.StatusUnauthorized)
 
@@ -42,6 +43,10 @@ func IsStatusInternalServer(err error) bool {
 
 func IsStatusNotFound(err error) bool {
 	return isErrorResponseWithStatusCode(err, http.StatusNotFound)
+}
+
+func IsStatusConflict(err error) bool {
+	return isErrorResponseWithStatusCode(err, http.StatusConflict)
 }
 
 func IsStatusPreconditionFailed(err error) bool {
